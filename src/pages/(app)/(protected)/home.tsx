@@ -13,7 +13,7 @@ import { parseOptions } from '@/lib/irv'
 interface Decision {
   title: string
   description?: string
-  optionsJson: string
+  optionsJson: unknown
   resultsVisibility?: string
   status: 'open' | 'closed'
   ballotCount?: number

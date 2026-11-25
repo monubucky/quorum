@@ -9,33 +9,30 @@ import { useAuth, useQuery, useUserLookup } from 'deepspace'
 import { ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Plus, X } from 'lucide-react'
 import { Badge, Button, Textarea, useToast } from '@/components/ui'
 import { callAction } from '@/lib/actions'
-import { parseOptions, type DecisionOption, type Round } from '@/lib/irv'
+import { fromJsonColumn, parseOptions, type DecisionOption, type Round } from '@/lib/irv'
 
 interface Decision {
   title: string
   description?: string
-  optionsJson: string
+  optionsJson: unknown
   resultsVisibility?: string
   status: 'open' | 'closed'
   ballotCount?: number
-  roundsJson?: string
-  winnersJson?: string
+  roundsJson?: unknown
+  winnersJson?: unknown
   tie?: boolean
   recordText?: string
 }
 interface Ballot {
   decisionId: string
-  ranking: string
+  ranking: unknown
   comment?: string
 }
 
-function safeJson<T>(s: unknown, fallback: T): T {
-  if (typeof s !== 'string' || !s) return fallback
-  try {
-    return JSON.parse(s) as T
-  } catch {
-    return fallback
-  }
+/** json columns come back already parsed; tolerate a raw string too. */
+function safeJson<T>(value: unknown, fallback: T): T {
+  const parsed = fromJsonColumn(value)
+  return parsed === undefined || parsed === null || parsed === '' ? fallback : (parsed as T)
 }
 
 export default function DecisionPage() {

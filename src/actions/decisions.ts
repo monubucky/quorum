@@ -6,7 +6,7 @@
 
 import type { ActionHandler } from 'deepspace/worker'
 import type { Env } from '../../worker'
-import { parseOptions, sanitizeRanking, tally, type DecisionOption, type Tally } from '../lib/irv'
+import { fromJsonColumn, parseOptions, sanitizeRanking, tally, type DecisionOption, type Tally } from '../lib/irv'
 
 type Row = Record<string, unknown>
 
@@ -30,12 +30,8 @@ async function loadRankings(
   const rankings: string[][] = []
   const comments: string[] = []
   for (const r of res.data.records) {
-    try {
-      const parsed: unknown = JSON.parse(String(r.data.ranking ?? '[]'))
-      if (Array.isArray(parsed)) rankings.push(parsed.filter((x): x is string => typeof x === 'string'))
-    } catch {
-      /* skip a corrupt ballot rather than fail the whole tally */
-    }
+    const parsed = fromJsonColumn(r.data.ranking)
+    if (Array.isArray(parsed)) rankings.push(parsed.filter((x): x is string => typeof x === 'string'))
     const c = String(r.data.comment ?? '').trim()
     if (c) comments.push(c)
   }

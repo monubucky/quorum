@@ -116,19 +116,28 @@ export function tally(optionIds: readonly string[], rawBallots: readonly string[
   }
 }
 
-/** Safe JSON parse for the options column; returns [] on anything malformed. */
-export function parseOptions(json: unknown): DecisionOption[] {
-  if (typeof json !== 'string') return []
+/**
+ * json columns are parsed by the record layer on read, so values arrive as
+ * already-parsed data from the client and from server actions. Accept either
+ * form (a JSON string or the parsed value) so no caller has to care.
+ */
+export function fromJsonColumn(value: unknown): unknown {
+  if (typeof value !== 'string') return value
   try {
-    const parsed: unknown = JSON.parse(json)
-    if (!Array.isArray(parsed)) return []
-    return parsed.flatMap((o) =>
-      o && typeof o === 'object' && typeof (o as DecisionOption).id === 'string' &&
-      typeof (o as DecisionOption).label === 'string'
-        ? [{ id: (o as DecisionOption).id, label: (o as DecisionOption).label }]
-        : [],
-    )
+    return JSON.parse(value)
   } catch {
-    return []
+    return undefined
   }
+}
+
+/** Safe read of the options column; returns [] on anything malformed. */
+export function parseOptions(value: unknown): DecisionOption[] {
+  const parsed = fromJsonColumn(value)
+  if (!Array.isArray(parsed)) return []
+  return parsed.flatMap((o) =>
+    o && typeof o === 'object' && typeof (o as DecisionOption).id === 'string' &&
+    typeof (o as DecisionOption).label === 'string'
+      ? [{ id: (o as DecisionOption).id, label: (o as DecisionOption).label }]
+      : [],
+  )
 }
